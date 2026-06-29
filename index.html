@@ -25,21 +25,23 @@ body.shake{animation:shake .15s ease 2}
 .grape:hover{transform:scale(1.15);box-shadow:0 0 20px rgba(168,85,247,.6)}
 .grape:active{transform:scale(1.4)}
 .grape .shine{position:absolute;width:12px;height:12px;background:rgba(255,255,255,.35);border-radius:50%;top:7px;left:9px}
-.grape .memo-bubble{display:none;position:absolute;bottom:52px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:8px 12px;border-radius:10px;font-size:11px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;z-index:30;pointer-events:none}
-.grape .memo-bubble::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #a855f7}
-.grape:hover .memo-bubble{display:block}
+.grape .memo-bubble{display:none;position:absolute;bottom:52px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:6px 10px;border-radius:8px;font-size:11px;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;z-index:30;pointer-events:none}
+.grape .memo-bubble::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #a855f7}
+@media(hover:hover){.grape:hover .memo-bubble{display:block}}
+@media(hover:none){.grape .memo-bubble{display:none!important}}
 @keyframes pop{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
 @keyframes burst{0%{transform:scale(1);opacity:1;filter:brightness(1)}50%{transform:scale(1.8);filter:brightness(2)}100%{transform:scale(0);opacity:0;filter:brightness(3)}}
 .grape.burst{animation:burst .5s ease-out forwards;pointer-events:none}
 
-.today-feed{max-width:360px;margin:20px auto 0;display:flex;flex-direction:column;gap:8px}
-.feed-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid rgba(255,255,255,.06)}
-.feed-dot{width:24px;height:24px;border-radius:50%;flex-shrink:0;margin-top:2px;position:relative}
-.feed-dot .shine{position:absolute;width:6px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;top:4px;left:5px}
+.today-feed{max-width:360px;margin:16px auto 0;display:flex;flex-direction:column;gap:6px}
+.today-feed-title{font-size:11px;color:#6b7280;font-weight:600;padding:0 4px;letter-spacing:1px;text-transform:uppercase}
+.feed-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:12px}
+.feed-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0;position:relative}
+.feed-dot .shine{position:absolute;width:5px;height:5px;background:rgba(255,255,255,.3);border-radius:50%;top:3px;left:4px}
 .feed-info{flex:1;min-width:0}
-.feed-time{font-size:10px;color:#6b7280}
-.feed-memo{font-size:13px;color:#d1d5db;margin-top:2px;word-break:break-word}
-.feed-no-memo{font-size:12px;color:#4b5563;font-style:italic}
+.feed-time{font-size:10px;color:#4b5563;float:right}
+.feed-memo{font-size:13px;color:#d1d5db;word-break:break-word}
+.feed-no-memo{font-size:12px;color:#374151;font-style:italic}
 
 .add-btn{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;border:none;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:36px;cursor:pointer;box-shadow:0 8px 40px rgba(168,85,247,.5),0 0 60px rgba(236,72,153,.2);z-index:10;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}
 .add-btn:active{transform:translateX(-50%) scale(.85);box-shadow:0 4px 15px rgba(168,85,247,.3)}
@@ -220,13 +222,13 @@ function render(){
 
   var feed=document.getElementById('today-feed');
   if(todayItems.length===0){
-    feed.innerHTML='<p style="color:#4b5563;text-align:center;padding:30px;font-size:13px">아직 오늘은 평화로운 날...</p>';
+    feed.innerHTML='<p style="color:#374151;text-align:center;padding:30px;font-size:13px">아직 오늘은 평화로운 날...</p>';
   }else{
-    feed.innerHTML=todayItems.slice().reverse().map(function(item,i){
+    feed.innerHTML='<div class="today-feed-title">오늘의 기록</div>'+todayItems.slice().reverse().map(function(item,i){
       var ci=todayItems.length-1-i;
       var t=new Date(item.time);
       var ts=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-      return'<div class="feed-item"><div class="feed-dot" style="background:'+COLORS[ci%COLORS.length]+'"><div class="shine"></div></div><div class="feed-info"><div class="feed-time">'+ts+'</div>'+(item.memo?'<div class="feed-memo">'+esc(item.memo)+'</div>':'<div class="feed-no-memo">메모 없음</div>')+'</div></div>';
+      return'<div class="feed-item"><div class="feed-dot" style="background:'+COLORS[ci%COLORS.length]+'"><div class="shine"></div></div><div class="feed-info"><span class="feed-time">'+ts+'</span>'+(item.memo?'<div class="feed-memo">'+esc(item.memo)+'</div>':'<div class="feed-no-memo">-</div>')+'</div></div>';
     }).join('');
   }
 }
