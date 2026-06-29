@@ -3,62 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>포도알 터뜨리기</title>
+<title>울화통 포도밭</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;font-family:-apple-system,'Pretendard',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
-.header{padding:20px;text-align:center;color:#fff}
-.header h1{font-size:20px;margin-bottom:4px}
-.header p{font-size:12px;color:#8b8fa3}
-.stats{display:flex;justify-content:center;gap:20px;padding:10px 20px}
+body{background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;font-family:-apple-system,'Pretendard',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+canvas#particle-canvas{position:fixed;inset:0;pointer-events:none;z-index:200}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+body.shake{animation:shake .15s ease 2}
+
+.header{padding:24px 20px 8px;text-align:center;color:#fff}
+.header h1{font-size:22px;margin-bottom:4px;background:linear-gradient(135deg,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header p{font-size:11px;color:#6b7280}
+.stats{display:flex;justify-content:center;gap:24px;padding:12px 20px}
 .stat{text-align:center;color:#fff}
-.stat .num{font-size:28px;font-weight:800;background:linear-gradient(135deg,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat .label{font-size:10px;color:#8b8fa3;margin-top:2px}
-.vine{flex:1;display:flex;flex-direction:column;align-items:center;padding:20px;position:relative;min-height:300px}
-.vine-stem{width:3px;background:linear-gradient(180deg,#4a7c59,#2d5a3a);position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:0;border-radius:2px}
-.grape-area{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:320px;padding:30px 10px 10px;z-index:1}
-.grape{width:36px;height:36px;border-radius:50%;cursor:pointer;position:relative;animation:pop .3s cubic-bezier(.34,1.56,.64,1);transition:transform .15s}
-.grape:active{transform:scale(1.3)}
-.grape .shine{position:absolute;width:10px;height:10px;background:rgba(255,255,255,.3);border-radius:50%;top:6px;left:8px}
-@keyframes pop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
-@keyframes burst{0%{transform:scale(1);opacity:1}100%{transform:scale(2);opacity:0}}
-.grape.burst{animation:burst .4s ease-out forwards;pointer-events:none}
-.add-btn{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);width:72px;height:72px;border-radius:50%;border:none;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:32px;cursor:pointer;box-shadow:0 8px 30px rgba(168,85,247,.5);z-index:10;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}
-.add-btn:active{transform:translateX(-50%) scale(.9);box-shadow:0 4px 15px rgba(168,85,247,.3)}
-.controls{position:fixed;bottom:30px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:10}
-.ctrl-btn{width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:16px;cursor:pointer;backdrop-filter:blur(10px)}
+.stat .num{font-size:32px;font-weight:900;background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat .label{font-size:10px;color:#6b7280;margin-top:2px;letter-spacing:1px;text-transform:uppercase}
+
+.main-area{flex:1;padding:16px 20px 120px;overflow-y:auto}
+.grape-area{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:360px;margin:0 auto;padding:10px}
+.grape{width:44px;height:44px;border-radius:50%;cursor:pointer;position:relative;animation:pop .4s cubic-bezier(.34,1.56,.64,1);transition:transform .15s,box-shadow .15s}
+.grape:hover{transform:scale(1.15);box-shadow:0 0 20px rgba(168,85,247,.6)}
+.grape:active{transform:scale(1.4)}
+.grape .shine{position:absolute;width:12px;height:12px;background:rgba(255,255,255,.35);border-radius:50%;top:7px;left:9px}
+.grape .memo-bubble{display:none;position:absolute;bottom:52px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:8px 12px;border-radius:10px;font-size:11px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;z-index:30;pointer-events:none}
+.grape .memo-bubble::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #a855f7}
+.grape:hover .memo-bubble{display:block}
+@keyframes pop{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes burst{0%{transform:scale(1);opacity:1;filter:brightness(1)}50%{transform:scale(1.8);filter:brightness(2)}100%{transform:scale(0);opacity:0;filter:brightness(3)}}
+.grape.burst{animation:burst .5s ease-out forwards;pointer-events:none}
+
+.today-feed{max-width:360px;margin:20px auto 0;display:flex;flex-direction:column;gap:8px}
+.feed-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid rgba(255,255,255,.06)}
+.feed-dot{width:24px;height:24px;border-radius:50%;flex-shrink:0;margin-top:2px;position:relative}
+.feed-dot .shine{position:absolute;width:6px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;top:4px;left:5px}
+.feed-info{flex:1;min-width:0}
+.feed-time{font-size:10px;color:#6b7280}
+.feed-memo{font-size:13px;color:#d1d5db;margin-top:2px;word-break:break-word}
+.feed-no-memo{font-size:12px;color:#4b5563;font-style:italic}
+
+.add-btn{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;border:none;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:36px;cursor:pointer;box-shadow:0 8px 40px rgba(168,85,247,.5),0 0 60px rgba(236,72,153,.2);z-index:10;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}
+.add-btn:active{transform:translateX(-50%) scale(.85);box-shadow:0 4px 15px rgba(168,85,247,.3)}
+.add-btn::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);opacity:.3;animation:pulse-ring 2s ease infinite;z-index:-1}
+@keyframes pulse-ring{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.15);opacity:.1}}
+
+.controls{position:fixed;bottom:34px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:10}
+.ctrl-btn{width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:#fff;font-size:17px;cursor:pointer;backdrop-filter:blur(10px);transition:background .15s}
 .ctrl-btn:active{background:rgba(255,255,255,.2)}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:rgba(168,85,247,.9);color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;transition:transform .3s ease;z-index:100;backdrop-filter:blur(10px)}
+
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);background:linear-gradient(135deg,rgba(168,85,247,.95),rgba(236,72,153,.95));color:#fff;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:700;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:100;backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(168,85,247,.4)}
 .toast.show{transform:translateX(-50%) translateY(0)}
-.memo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center}
+
+.memo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .memo-overlay.open{display:flex}
-.memo-box{background:#16213e;border-radius:16px;padding:24px;width:300px;max-width:90vw}
-.memo-box h3{color:#fff;font-size:15px;margin-bottom:12px}
-.memo-box textarea{width:100%;height:80px;background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#fff;padding:10px;font-size:13px;resize:none;font-family:inherit}
-.memo-box .btns{display:flex;gap:8px;margin-top:12px}
-.memo-box .btns button{flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer}
-.memo-box .btn-save{background:#a855f7;color:#fff}
-.memo-box .btn-cancel{background:#333;color:#fff}
-.history{position:fixed;inset:0;background:#1a1a2e;z-index:60;display:none;flex-direction:column}
+.memo-box{background:#16213e;border-radius:20px;padding:28px;width:320px;max-width:90vw;border:1px solid rgba(168,85,247,.2)}
+.memo-box h3{color:#fff;font-size:16px;margin-bottom:14px}
+.memo-box textarea{width:100%;height:80px;background:#0f0f1a;border:1px solid #333;border-radius:12px;color:#fff;padding:12px;font-size:14px;resize:none;font-family:inherit;transition:border-color .2s}
+.memo-box textarea:focus{outline:none;border-color:#a855f7}
+.memo-box .btns{display:flex;gap:8px;margin-top:14px}
+.memo-box .btns button{flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .1s}
+.memo-box .btns button:active{transform:scale(.95)}
+.memo-box .btn-save{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff}
+.memo-box .btn-cancel{background:#2a2a4a;color:#9ca3af}
+
+.history{position:fixed;inset:0;background:#0f0f1a;z-index:60;display:none;flex-direction:column}
 .history.open{display:flex}
-.history-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2a2a4a}
-.history-header h2{color:#fff;font-size:16px}
-.history-close{background:none;border:none;color:#8b8fa3;font-size:24px;cursor:pointer}
+.history-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #1e1e3a}
+.history-header h2{color:#fff;font-size:17px}
+.history-close{background:none;border:none;color:#6b7280;font-size:26px;cursor:pointer}
 .history-list{flex:1;overflow-y:auto;padding:12px 20px}
-.history-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #2a2a4a}
-.history-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;margin-top:2px}
-.history-dot .shine{position:absolute;width:7px;height:7px;background:rgba(255,255,255,.3);border-radius:50%;top:4px;left:6px}
+.history-item{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #1e1e3a}
+.history-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;margin-top:2px;position:relative}
+.history-dot .shine{position:absolute;width:8px;height:8px;background:rgba(255,255,255,.3);border-radius:50%;top:5px;left:6px}
 .history-info{flex:1}
-.history-time{font-size:11px;color:#8b8fa3}
-.history-memo{font-size:13px;color:#ccc;margin-top:4px}
-.history-del{background:none;border:none;color:#555;font-size:14px;cursor:pointer;padding:4px}
+.history-time{font-size:11px;color:#6b7280}
+.history-memo{font-size:13px;color:#d1d5db;margin-top:4px;word-break:break-word}
+.history-del{background:none;border:none;color:#4b5563;font-size:16px;cursor:pointer;padding:4px}
 </style>
 </head>
 <body>
 
+<canvas id="particle-canvas"></canvas>
+
 <div class="header">
   <h1>울화통 포도밭</h1>
-  <p>화날 때마다 포도알 하나씩, 꾹 눌러서 터뜨리기도 가능</p>
+  <p>화날 때마다 하나씩, 터뜨려도 좋아</p>
 </div>
 
 <div class="stats">
@@ -67,9 +95,9 @@ body{background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;font
   <div class="stat"><div class="num" id="streak-count">0</div><div class="label">연속일</div></div>
 </div>
 
-<div class="vine">
-  <div class="vine-stem" id="vine-stem"></div>
+<div class="main-area">
   <div class="grape-area" id="grape-area"></div>
+  <div class="today-feed" id="today-feed"></div>
 </div>
 
 <button class="add-btn" id="add-btn" onclick="openMemo()">+</button>
@@ -81,20 +109,20 @@ body{background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;font
 
 <div class="toast" id="toast"></div>
 
-<div class="memo-overlay" id="memo-overlay">
+<div class="memo-overlay" id="memo-overlay" onclick="if(event.target===this)closeMemo()">
   <div class="memo-box">
     <h3>뭐가 화났어? (안 써도 됨)</h3>
-    <textarea id="memo-input" placeholder="간단 메모..."></textarea>
+    <textarea id="memo-input" placeholder="짧게 적어봐..."></textarea>
     <div class="btns">
       <button class="btn-cancel" onclick="closeMemo()">취소</button>
-      <button class="btn-save" onclick="addGrape()">포도알 추가</button>
+      <button class="btn-save" onclick="addGrape()">추가</button>
     </div>
   </div>
 </div>
 
 <div class="history" id="history">
   <div class="history-header">
-    <h2>기록</h2>
+    <h2>전체 기록</h2>
     <button class="history-close" onclick="closeHistory()">✕</button>
   </div>
   <div class="history-list" id="history-list"></div>
@@ -103,12 +131,55 @@ body{background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;font
 <script>
 var COLORS=[
   'radial-gradient(circle at 35% 35%,#c084fc,#7c3aed)',
+  'radial-gradient(circle at 35% 35%,#f472b6,#db2777)',
   'radial-gradient(circle at 35% 35%,#a78bfa,#6d28d9)',
-  'radial-gradient(circle at 35% 35%,#d8b4fe,#9333ea)',
+  'radial-gradient(circle at 35% 35%,#fb923c,#ea580c)',
+  'radial-gradient(circle at 35% 35%,#34d399,#059669)',
+  'radial-gradient(circle at 35% 35%,#60a5fa,#2563eb)',
+  'radial-gradient(circle at 35% 35%,#fbbf24,#d97706)',
   'radial-gradient(circle at 35% 35%,#e879f9,#a21caf)',
-  'radial-gradient(circle at 35% 35%,#818cf8,#4f46e5)',
 ];
+var FLAT_COLORS=['#c084fc','#f472b6','#a78bfa','#fb923c','#34d399','#60a5fa','#fbbf24','#e879f9'];
 
+var canvas=document.getElementById('particle-canvas');
+var ctx=canvas.getContext('2d');
+var particles=[];
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
+
+function spawnParticles(x,y,color){
+  for(var i=0;i<25;i++){
+    var angle=Math.random()*Math.PI*2;
+    var speed=2+Math.random()*6;
+    var size=3+Math.random()*5;
+    particles.push({x:x,y:y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,size:size,color:color||FLAT_COLORS[Math.floor(Math.random()*FLAT_COLORS.length)],life:1,decay:.015+Math.random()*.02,gravity:.1});
+  }
+  for(var i=0;i<8;i++){
+    var angle=Math.random()*Math.PI*2;
+    var speed=1+Math.random()*3;
+    particles.push({x:x,y:y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,size:8+Math.random()*8,color:'#fff',life:.6,decay:.03+Math.random()*.02,gravity:.05});
+  }
+}
+
+function animateParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(var i=particles.length-1;i>=0;i--){
+    var p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=p.gravity;p.life-=p.decay;p.vx*=.98;
+    if(p.life<=0){particles.splice(i,1);continue;}
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function getData(){try{return JSON.parse(localStorage.getItem('grape_data'))||[];}catch(e){return[];}}
 function saveData(d){localStorage.setItem('grape_data',JSON.stringify(d));}
 function todayStr(){return new Date().toISOString().slice(0,10);}
@@ -121,11 +192,9 @@ function render(){
   document.getElementById('all-count').textContent=data.length;
 
   var dates=[...new Set(data.map(function(d){return d.date;}))].sort().reverse();
-  var streak=0;
-  var check=new Date();
+  var streak=0;var check=new Date();
   for(var i=0;i<dates.length;i++){
-    var ds=check.toISOString().slice(0,10);
-    if(dates[i]===ds){streak++;check.setDate(check.getDate()-1);}
+    if(dates[i]===check.toISOString().slice(0,10)){streak++;check.setDate(check.getDate()-1);}
     else break;
   }
   document.getElementById('streak-count').textContent=streak;
@@ -136,21 +205,33 @@ function render(){
     var g=document.createElement('div');
     g.className='grape';
     g.style.background=COLORS[idx%COLORS.length];
-    g.innerHTML='<div class="shine"></div>';
-    g.title=item.memo||'';
-    g.addEventListener('click',function(){
+    g.style.animationDelay=(idx*50)+'ms';
+    g.innerHTML='<div class="shine"></div>'+(item.memo?'<div class="memo-bubble">'+esc(item.memo)+'</div>':'');
+    g.addEventListener('click',function(e){
+      var rect=g.getBoundingClientRect();
+      spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,FLAT_COLORS[idx%FLAT_COLORS.length]);
       g.classList.add('burst');
+      document.body.classList.add('shake');
       showToast('팡!');
-      setTimeout(function(){g.classList.remove('burst');},400);
+      setTimeout(function(){g.classList.remove('burst');document.body.classList.remove('shake');},500);
     });
     area.appendChild(g);
   });
 
-  var stem=document.getElementById('vine-stem');
-  stem.style.height=Math.min(area.offsetHeight+40,500)+'px';
+  var feed=document.getElementById('today-feed');
+  if(todayItems.length===0){
+    feed.innerHTML='<p style="color:#4b5563;text-align:center;padding:30px;font-size:13px">아직 오늘은 평화로운 날...</p>';
+  }else{
+    feed.innerHTML=todayItems.slice().reverse().map(function(item,i){
+      var ci=todayItems.length-1-i;
+      var t=new Date(item.time);
+      var ts=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      return'<div class="feed-item"><div class="feed-dot" style="background:'+COLORS[ci%COLORS.length]+'"><div class="shine"></div></div><div class="feed-info"><div class="feed-time">'+ts+'</div>'+(item.memo?'<div class="feed-memo">'+esc(item.memo)+'</div>':'<div class="feed-no-memo">메모 없음</div>')+'</div></div>';
+    }).join('');
+  }
 }
 
-function openMemo(){document.getElementById('memo-overlay').classList.add('open');document.getElementById('memo-input').value='';document.getElementById('memo-input').focus();}
+function openMemo(){document.getElementById('memo-overlay').classList.add('open');document.getElementById('memo-input').value='';setTimeout(function(){document.getElementById('memo-input').focus();},100);}
 function closeMemo(){document.getElementById('memo-overlay').classList.remove('open');}
 
 function addGrape(){
@@ -160,11 +241,20 @@ function addGrape(){
   saveData(data);
   closeMemo();
   render();
+
+  setTimeout(function(){
+    var btn=document.getElementById('add-btn');
+    var rect=btn.getBoundingClientRect();
+    spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2);
+    document.body.classList.add('shake');
+    setTimeout(function(){document.body.classList.remove('shake');},300);
+  },100);
+
   showToast(getRandomMsg());
 }
 
 function getRandomMsg(){
-  var msgs=['한 알 추가!','그래, 화낼 수 있지','포도알이 익어간다','꾹 참았다 대단해','한 알 더 모았다'];
+  var msgs=['한 알 추가!','그래, 화낼 수 있지','알 하나 더 익어간다','꾹 참았다 대단해','기록 완료!','잘했어, 기록하는 게 중요해','화난 만큼 성장 중'];
   return msgs[Math.floor(Math.random()*msgs.length)];
 }
 
@@ -172,43 +262,35 @@ function showToast(msg){
   var t=document.getElementById('toast');
   t.textContent=msg;
   t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show');},1500);
+  setTimeout(function(){t.classList.remove('show');},1800);
 }
 
 function resetToday(){
-  if(!confirm('오늘 포도알을 전부 지울까요?'))return;
+  if(!confirm('오늘 기록을 전부 지울까요?'))return;
   var data=getData();
-  var today=todayStr();
-  data=data.filter(function(d){return d.date!==today;});
-  saveData(data);
-  render();
-  showToast('오늘 초기화 완료');
+  data=data.filter(function(d){return d.date!==todayStr();});
+  saveData(data);render();
+  showToast('초기화 완료');
 }
 
 function openHistory(){
-  var h=document.getElementById('history');
-  h.classList.add('open');
+  document.getElementById('history').classList.add('open');
   var data=getData().slice().reverse();
   var list=document.getElementById('history-list');
-  if(!data.length){list.innerHTML='<p style="color:#8b8fa3;text-align:center;padding:40px">아직 기록이 없어요</p>';return;}
-  var html='';
+  if(!data.length){list.innerHTML='<p style="color:#6b7280;text-align:center;padding:40px">아직 기록이 없어요</p>';return;}
+  var html='';var lastDate='';
   data.forEach(function(item,i){
+    var d=item.date;
+    if(d!==lastDate){html+='<div style="padding:12px 0 4px;font-size:12px;font-weight:700;color:#a855f7">'+d+'</div>';lastDate=d;}
     var t=new Date(item.time);
-    var ts=t.toLocaleDateString('ko-KR')+' '+t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    var ci=getData().length-1-i;
-    html+='<div class="history-item"><div class="history-dot" style="background:'+COLORS[ci%COLORS.length]+';position:relative"><div class="shine"></div></div><div class="history-info"><div class="history-time">'+ts+'</div>'+(item.memo?'<div class="history-memo">'+item.memo.replace(/</g,'&lt;')+'</div>':'')+'</div><button class="history-del" onclick="delItem('+i+')">✕</button></div>';
+    var ts=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    var ci=i%COLORS.length;
+    html+='<div class="history-item"><div class="history-dot" style="background:'+COLORS[ci]+'"><div class="shine"></div></div><div class="history-info"><div class="history-time">'+ts+'</div>'+(item.memo?'<div class="history-memo">'+esc(item.memo)+'</div>':'')+'</div><button class="history-del" onclick="delItem('+i+')">✕</button></div>';
   });
   list.innerHTML=html;
 }
 function closeHistory(){document.getElementById('history').classList.remove('open');}
-function delItem(ri){
-  var data=getData();
-  var idx=data.length-1-ri;
-  data.splice(idx,1);
-  saveData(data);
-  openHistory();
-  render();
-}
+function delItem(ri){var data=getData();data.splice(data.length-1-ri,1);saveData(data);openHistory();render();}
 
 render();
 </script>
