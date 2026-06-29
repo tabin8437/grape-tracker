@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>울화통 포도밭</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#0f0f1a;color:#fff}
+.login-screen h1{font-size:24px;margin-bottom:8px;background:linear-gradient(135deg,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-screen p{font-size:12px;color:#6b7280;margin-bottom:24px}
+.login-screen .g_id_signin{margin:0 auto}
+#app{display:none}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;font-family:-apple-system,'Pretendard',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 canvas#particle-canvas{position:fixed;inset:0;pointer-events:none;z-index:200}
@@ -25,7 +31,7 @@ body.shake{animation:shake .15s ease 2}
 .grape:hover{transform:scale(1.15);box-shadow:0 0 20px rgba(168,85,247,.6)}
 .grape:active{transform:scale(1.4)}
 .grape .shine{position:absolute;width:12px;height:12px;background:rgba(255,255,255,.35);border-radius:50%;top:7px;left:9px}
-.memo-popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:16px 24px;border-radius:14px;font-size:15px;min-width:140px;max-width:300px;text-align:center;z-index:50;box-shadow:0 12px 40px rgba(0,0,0,.7);animation:bubbleIn .25s ease;word-break:break-word;line-height:1.6}
+.memo-popup{display:none;position:fixed;top:auto;bottom:140px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:16px 24px;border-radius:14px;font-size:15px;min-width:140px;max-width:300px;text-align:center;z-index:50;box-shadow:0 12px 40px rgba(0,0,0,.7);animation:bubbleIn .25s ease;word-break:break-word;line-height:1.6}
 .memo-popup.show{display:block}
 .memo-popup .memo-time{font-size:10px;color:#6b7280;margin-top:6px}
 @keyframes pop{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
@@ -82,6 +88,19 @@ body.shake{animation:shake .15s ease 2}
 </head>
 <body>
 
+<div class="login-screen" id="login-screen">
+  <h1>울화통 포도밭</h1>
+  <p>Google 계정으로 로그인</p>
+  <div id="g_id_onload"
+    data-client_id="272234568921-8m6a55tgvo7e86nsk2u7tjbarqff34en.apps.googleusercontent.com"
+    data-callback="onLogin"
+    data-auto_prompt="false"
+    data-use_fedcm_for_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill" data-logo_alignment="left"></div>
+</div>
+
+<div id="app">
 <canvas id="particle-canvas"></canvas>
 
 <div class="header">
@@ -129,6 +148,22 @@ body.shake{animation:shake .15s ease 2}
 </div>
 
 <script>
+function decodeJwt(t){try{var b=t.split('.')[1];return JSON.parse(atob(b.replace(/-/g,'+').replace(/_/g,'/')));}catch(e){return null;}}
+function onLogin(response){
+  var p=decodeJwt(response.credential);
+  if(!p||!p.email)return;
+  sessionStorage.setItem('grape_user',JSON.stringify({email:p.email,name:p.name||p.email}));
+  startApp();
+}
+function startApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  render();
+}
+(function(){
+  try{var u=JSON.parse(sessionStorage.getItem('grape_user'));if(u&&u.email){startApp();}}catch(e){}
+})();
+
 var COLORS=[
   'radial-gradient(circle at 35% 35%,#c084fc,#7c3aed)',
   'radial-gradient(circle at 35% 35%,#f472b6,#db2777)',
@@ -184,7 +219,14 @@ function getData(){try{return JSON.parse(localStorage.getItem('grape_data'))||[]
 function saveData(d){localStorage.setItem('grape_data',JSON.stringify(d));}
 function todayStr(){return new Date().toISOString().slice(0,10);}
 
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.grape')&&!e.target.closest('.memo-popup')){
+    document.getElementById('memo-popup').classList.remove('show');
+    document.querySelectorAll('.grape.tapped').forEach(function(el){el.classList.remove('tapped');});
+  }
+});
 function render(){
+  document.getElementById('memo-popup').classList.remove('show');
   var data=getData();
   var today=todayStr();
   var todayItems=data.filter(function(d){return d.date===today;});
@@ -298,5 +340,6 @@ function delItem(ri){var data=getData();data.splice(data.length-1-ri,1);saveData
 
 render();
 </script>
+</div>
 </body>
 </html>
