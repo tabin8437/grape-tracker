@@ -149,9 +149,15 @@ body.shake{animation:shake .15s ease 2}
 
 <script>
 function decodeJwt(t){try{var b=t.split('.')[1];return JSON.parse(atob(b.replace(/-/g,'+').replace(/_/g,'/')));}catch(e){return null;}}
+var ALLOWED_EMAILS=['tabin8437@gmail.com'];
 function onLogin(response){
   var p=decodeJwt(response.credential);
   if(!p||!p.email)return;
+  if(ALLOWED_EMAILS.indexOf(p.email.toLowerCase())<0){
+    document.querySelector('.login-screen p').textContent='접근 권한이 없습니다.';
+    document.querySelector('.login-screen p').style.color='#ef4444';
+    return;
+  }
   sessionStorage.setItem('grape_user',JSON.stringify({email:p.email,name:p.name||p.email}));
   startApp();
 }
