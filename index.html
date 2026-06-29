@@ -187,7 +187,7 @@ body.shake{animation:shake .2s ease}
 <script>
 /* ── Auth ── */
 function decodeJwt(t){try{var b=t.split('.')[1];return JSON.parse(atob(b.replace(/-/g,'+').replace(/_/g,'/')));}catch(e){return null;}}
-var ALLOWED_EMAILS=['tabin8437@gmail.com'];
+var ALLOWED_EMAILS=['tabin8437@gmail.com','jhw5787@gmail.com'];
 function onLogin(response){
   var p=decodeJwt(response.credential);
   if(!p||!p.email)return;
@@ -302,7 +302,7 @@ function addGrape(){
   setTimeout(function(){var btn=document.getElementById('add-btn'),r=btn.getBoundingClientRect();spawnParticles(r.left+r.width/2,r.top+r.height/2);document.body.classList.add('shake');setTimeout(function(){document.body.classList.remove('shake');},300);},100);
   showToast(getRandomMsg());
 }
-function getRandomMsg(){var m=['한 알 추가!','그래, 화낼 수 있지','알 하나 더 익어간다','꾹 참았다 대단해','기록 완료!','화난 만큼 성장 중'];return m[Math.floor(Math.random()*m.length)];}
+function getRandomMsg(){var m=['한 알 추가!','그래, 화낼 수 있지','알 하나 더 익어간다','꾹 참았다 대단해','기록 완료!','화난 만큼 성장 중','괜찮아, 다 지나가','오늘도 생존 완료','참느라 고생했다','이것도 경험이다','나중에 웃을 날 온다','일단 기록하는 너 멋져','화는 기록하면 반으로 줄어','숨 한번 크게 쉬어','내일은 좀 나을 거야','포도주 될 때까지 익혀'];return m[Math.floor(Math.random()*m.length)];}
 function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1800);}
 function resetToday(){if(!confirm('오늘 기록을 전부 지울까요?'))return;var d=getData();d=d.filter(function(x){return x.date!==todayStr();});saveData(d);render();showToast('초기화 완료');}
 
@@ -323,8 +323,8 @@ function delItem(ri){var d=getData();d.splice(d.length-1-ri,1);saveData(d);openH
 
 /* ── Sandbag (샌드백) ── */
 var comboCount=0,comboTimer=null,punchLock=false;
-var HIT_WORDS=['💥','POW','BAM','SMACK','👊','BOOM','CRACK','퍽!','빡!','💢'];
-var COMBO_MSGS={10:'좀 치네?',25:'미쳤다',50:'폭풍 주먹!',75:'분노의 질주',100:'🔥 전설의 주먹 🔥',200:'☠️ 파괴신 강림 ☠️'};
+var HIT_WORDS=['💥','POW','BAM','SMACK','👊','BOOM','CRACK','퍽!','빡!','💢','WHAM','KO','찰싹!','억!','💀','BANG','으악!'];
+var COMBO_MSGS={5:'워밍업?',10:'좀 치네?',15:'손 풀렸다',20:'박치기 각',25:'미쳤다',30:'야수의 심장',40:'킬러 본능',50:'🥊 폭풍 주먹!',60:'멈출 수 없다',75:'분노의 질주',85:'나를 막을 자 없다',100:'🔥 전설의 주먹 🔥',125:'🌋 화산 폭발',150:'⚡ 번개 주먹',175:'💀 사신 강림',200:'☠️ 파괴신 ☠️',250:'🪐 행성 파괴자',300:'🌌 우주 멸망급',500:'?????? 뭐야 그만 쳐'};
 
 function punchBag(e){
   e.preventDefault();
@@ -351,6 +351,17 @@ function punchBag(e){
   document.body.classList.add('shake');setTimeout(function(){document.body.classList.remove('shake');},200);
 
   if(navigator.vibrate)navigator.vibrate(30);
+
+  // 특수 임팩트
+  if(comboCount%10===0&&comboCount>0){
+    for(var j=0;j<5;j++)spawnParticles(Math.random()*canvas.width,Math.random()*canvas.height,null,20);
+    if(navigator.vibrate)navigator.vibrate([50,30,50]);
+  }
+  if(comboCount%50===0&&comboCount>0){
+    document.body.style.background='#fff';setTimeout(function(){document.body.style.background='#0f0f1a';},80);
+    for(var j=0;j<10;j++)spawnParticles(canvas.width/2,canvas.height/2,null,40);
+    if(navigator.vibrate)navigator.vibrate([100,50,100,50,100]);
+  }
 
   var msg=COMBO_MSGS[comboCount];
   if(msg)document.getElementById('combo-msg').textContent=msg;
