@@ -28,7 +28,7 @@ body.shake{animation:shake .15s ease 2}
 .grape .memo-bubble{display:none;position:absolute;bottom:52px;left:50%;transform:translateX(-50%);background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:6px 10px;border-radius:8px;font-size:11px;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;z-index:30;pointer-events:none}
 .grape .memo-bubble::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #a855f7}
 @media(hover:hover){.grape:hover .memo-bubble{display:block}}
-@media(hover:none){.grape .memo-bubble{display:none!important}}
+.grape.tapped .memo-bubble{display:block!important}
 @keyframes pop{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
 @keyframes burst{0%{transform:scale(1);opacity:1;filter:brightness(1)}50%{transform:scale(1.8);filter:brightness(2)}100%{transform:scale(0);opacity:0;filter:brightness(3)}}
 .grape.burst{animation:burst .5s ease-out forwards;pointer-events:none}
@@ -98,7 +98,6 @@ body.shake{animation:shake .15s ease 2}
 
 <div class="main-area">
   <div class="grape-area" id="grape-area"></div>
-  <div class="today-feed" id="today-feed"></div>
 </div>
 
 <button class="add-btn" id="add-btn" onclick="openMemo()">+</button>
@@ -209,28 +208,21 @@ function render(){
     g.style.animationDelay=(idx*50)+'ms';
     g.innerHTML='<div class="shine"></div>'+(item.memo?'<div class="memo-bubble">'+esc(item.memo)+'</div>':'');
     g.addEventListener('click',function(e){
-      var rect=g.getBoundingClientRect();
-      spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,FLAT_COLORS[idx%FLAT_COLORS.length]);
-      g.classList.add('burst');
-      document.body.classList.add('shake');
-      showToast('팡!');
-      setTimeout(function(){g.classList.remove('burst');document.body.classList.remove('shake');},500);
+      if(g.classList.contains('tapped')){
+        var rect=g.getBoundingClientRect();
+        spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,FLAT_COLORS[idx%FLAT_COLORS.length]);
+        g.classList.add('burst');
+        document.body.classList.add('shake');
+        showToast('팡!');
+        setTimeout(function(){g.classList.remove('burst');g.classList.remove('tapped');document.body.classList.remove('shake');},500);
+      }else{
+        document.querySelectorAll('.grape.tapped').forEach(function(el){el.classList.remove('tapped');});
+        g.classList.add('tapped');
+      }
     });
     area.appendChild(g);
   });
 
-  var feed=document.getElementById('today-feed');
-  if(todayItems.length===0){
-    feed.innerHTML='<p style="color:#374151;text-align:center;padding:30px;font-size:13px">아직 오늘은 평화로운 날...</p>';
-  }else{
-    feed.innerHTML=todayItems.slice().reverse().map(function(item,i){
-      if(!item.memo)return '';
-      var t=new Date(item.time);
-      var ts=t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-      var side=i%2===0?'':'right';
-      return'<div class="bubble '+side+'"><div class="bubble-memo">'+esc(item.memo)+'</div><div class="bubble-time">'+ts+'</div></div>';
-    }).join('');
-  }
 }
 
 function openMemo(){document.getElementById('memo-overlay').classList.add('open');document.getElementById('memo-input').value='';setTimeout(function(){document.getElementById('memo-input').focus();},100);}
