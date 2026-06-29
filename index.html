@@ -25,10 +25,9 @@ body.shake{animation:shake .15s ease 2}
 .grape:hover{transform:scale(1.15);box-shadow:0 0 20px rgba(168,85,247,.6)}
 .grape:active{transform:scale(1.4)}
 .grape .shine{position:absolute;width:12px;height:12px;background:rgba(255,255,255,.35);border-radius:50%;top:7px;left:9px}
-.grape .memo-bubble{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:auto;top:80px;background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:10px 16px;border-radius:12px;font-size:13px;white-space:normal;min-width:120px;max-width:280px;text-align:center;z-index:50;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,.6)}
-.grape .memo-bubble::after{display:none}
-@media(hover:hover){.grape:hover .memo-bubble{display:block}}
-.grape.tapped .memo-bubble{display:block!important}
+.memo-popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e1e3a;border:1px solid #a855f7;color:#e2e8f0;padding:16px 24px;border-radius:14px;font-size:15px;min-width:140px;max-width:300px;text-align:center;z-index:50;box-shadow:0 12px 40px rgba(0,0,0,.7);animation:bubbleIn .25s ease;word-break:break-word;line-height:1.6}
+.memo-popup.show{display:block}
+.memo-popup .memo-time{font-size:10px;color:#6b7280;margin-top:6px}
 @keyframes pop{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
 @keyframes burst{0%{transform:scale(1);opacity:1;filter:brightness(1)}50%{transform:scale(1.8);filter:brightness(2)}100%{transform:scale(0);opacity:0;filter:brightness(3)}}
 .grape.burst{animation:burst .5s ease-out forwards;pointer-events:none}
@@ -108,6 +107,7 @@ body.shake{animation:shake .15s ease 2}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="memo-popup" id="memo-popup" onclick="this.classList.remove('show')"></div>
 
 <div class="memo-overlay" id="memo-overlay" onclick="if(event.target===this)closeMemo()">
   <div class="memo-box">
@@ -206,18 +206,28 @@ function render(){
     g.className='grape';
     g.style.background=COLORS[idx%COLORS.length];
     g.style.animationDelay=(idx*50)+'ms';
-    g.innerHTML='<div class="shine"></div>'+(item.memo?'<div class="memo-bubble">'+esc(item.memo)+'</div>':'');
+    g.innerHTML='<div class="shine"></div>';
+    var memo=item.memo;
+    var time=new Date(item.time).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     g.addEventListener('click',function(e){
       if(g.classList.contains('tapped')){
         var rect=g.getBoundingClientRect();
         spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,FLAT_COLORS[idx%FLAT_COLORS.length]);
         g.classList.add('burst');
         document.body.classList.add('shake');
+        document.getElementById('memo-popup').classList.remove('show');
         showToast('팡!');
         setTimeout(function(){g.classList.remove('burst');g.classList.remove('tapped');document.body.classList.remove('shake');},500);
       }else{
         document.querySelectorAll('.grape.tapped').forEach(function(el){el.classList.remove('tapped');});
         g.classList.add('tapped');
+        var popup=document.getElementById('memo-popup');
+        if(memo){
+          popup.innerHTML=esc(memo)+'<div class="memo-time">'+time+'</div>';
+          popup.classList.add('show');
+        }else{
+          popup.classList.remove('show');
+        }
       }
     });
     area.appendChild(g);
