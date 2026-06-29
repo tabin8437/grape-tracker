@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>포도알 터뜨리기</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;min-height:100vh;display:flex;flex-direction:column;font-family:-apple-system,'Pretendard',sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.header{padding:20px;text-align:center;color:#fff}
+.header h1{font-size:20px;margin-bottom:4px}
+.header p{font-size:12px;color:#8b8fa3}
+.stats{display:flex;justify-content:center;gap:20px;padding:10px 20px}
+.stat{text-align:center;color:#fff}
+.stat .num{font-size:28px;font-weight:800;background:linear-gradient(135deg,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat .label{font-size:10px;color:#8b8fa3;margin-top:2px}
+.vine{flex:1;display:flex;flex-direction:column;align-items:center;padding:20px;position:relative;min-height:300px}
+.vine-stem{width:3px;background:linear-gradient(180deg,#4a7c59,#2d5a3a);position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:0;border-radius:2px}
+.grape-area{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:320px;padding:30px 10px 10px;z-index:1}
+.grape{width:36px;height:36px;border-radius:50%;cursor:pointer;position:relative;animation:pop .3s cubic-bezier(.34,1.56,.64,1);transition:transform .15s}
+.grape:active{transform:scale(1.3)}
+.grape .shine{position:absolute;width:10px;height:10px;background:rgba(255,255,255,.3);border-radius:50%;top:6px;left:8px}
+@keyframes pop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes burst{0%{transform:scale(1);opacity:1}100%{transform:scale(2);opacity:0}}
+.grape.burst{animation:burst .4s ease-out forwards;pointer-events:none}
+.add-btn{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);width:72px;height:72px;border-radius:50%;border:none;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:32px;cursor:pointer;box-shadow:0 8px 30px rgba(168,85,247,.5);z-index:10;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}
+.add-btn:active{transform:translateX(-50%) scale(.9);box-shadow:0 4px 15px rgba(168,85,247,.3)}
+.controls{position:fixed;bottom:30px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:10}
+.ctrl-btn{width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:16px;cursor:pointer;backdrop-filter:blur(10px)}
+.ctrl-btn:active{background:rgba(255,255,255,.2)}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:rgba(168,85,247,.9);color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;transition:transform .3s ease;z-index:100;backdrop-filter:blur(10px)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.memo-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center}
+.memo-overlay.open{display:flex}
+.memo-box{background:#16213e;border-radius:16px;padding:24px;width:300px;max-width:90vw}
+.memo-box h3{color:#fff;font-size:15px;margin-bottom:12px}
+.memo-box textarea{width:100%;height:80px;background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#fff;padding:10px;font-size:13px;resize:none;font-family:inherit}
+.memo-box .btns{display:flex;gap:8px;margin-top:12px}
+.memo-box .btns button{flex:1;padding:10px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer}
+.memo-box .btn-save{background:#a855f7;color:#fff}
+.memo-box .btn-cancel{background:#333;color:#fff}
+.history{position:fixed;inset:0;background:#1a1a2e;z-index:60;display:none;flex-direction:column}
+.history.open{display:flex}
+.history-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2a2a4a}
+.history-header h2{color:#fff;font-size:16px}
+.history-close{background:none;border:none;color:#8b8fa3;font-size:24px;cursor:pointer}
+.history-list{flex:1;overflow-y:auto;padding:12px 20px}
+.history-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #2a2a4a}
+.history-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.history-dot .shine{position:absolute;width:7px;height:7px;background:rgba(255,255,255,.3);border-radius:50%;top:4px;left:6px}
+.history-info{flex:1}
+.history-time{font-size:11px;color:#8b8fa3}
+.history-memo{font-size:13px;color:#ccc;margin-top:4px}
+.history-del{background:none;border:none;color:#555;font-size:14px;cursor:pointer;padding:4px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>울화통 포도밭</h1>
+  <p>화날 때마다 포도알 하나씩, 꾹 눌러서 터뜨리기도 가능</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="num" id="total-count">0</div><div class="label">오늘</div></div>
+  <div class="stat"><div class="num" id="all-count">0</div><div class="label">전체</div></div>
+  <div class="stat"><div class="num" id="streak-count">0</div><div class="label">연속일</div></div>
+</div>
+
+<div class="vine">
+  <div class="vine-stem" id="vine-stem"></div>
+  <div class="grape-area" id="grape-area"></div>
+</div>
+
+<button class="add-btn" id="add-btn" onclick="openMemo()">+</button>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="openHistory()">📋</button>
+  <button class="ctrl-btn" onclick="resetToday()">🗑</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="memo-overlay" id="memo-overlay">
+  <div class="memo-box">
+    <h3>뭐가 화났어? (안 써도 됨)</h3>
+    <textarea id="memo-input" placeholder="간단 메모..."></textarea>
+    <div class="btns">
+      <button class="btn-cancel" onclick="closeMemo()">취소</button>
+      <button class="btn-save" onclick="addGrape()">포도알 추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="history" id="history">
+  <div class="history-header">
+    <h2>기록</h2>
+    <button class="history-close" onclick="closeHistory()">✕</button>
+  </div>
+  <div class="history-list" id="history-list"></div>
+</div>
+
+<script>
+var COLORS=[
+  'radial-gradient(circle at 35% 35%,#c084fc,#7c3aed)',
+  'radial-gradient(circle at 35% 35%,#a78bfa,#6d28d9)',
+  'radial-gradient(circle at 35% 35%,#d8b4fe,#9333ea)',
+  'radial-gradient(circle at 35% 35%,#e879f9,#a21caf)',
+  'radial-gradient(circle at 35% 35%,#818cf8,#4f46e5)',
+];
+
+function getData(){try{return JSON.parse(localStorage.getItem('grape_data'))||[];}catch(e){return[];}}
+function saveData(d){localStorage.setItem('grape_data',JSON.stringify(d));}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+
+function render(){
+  var data=getData();
+  var today=todayStr();
+  var todayItems=data.filter(function(d){return d.date===today;});
+  document.getElementById('total-count').textContent=todayItems.length;
+  document.getElementById('all-count').textContent=data.length;
+
+  var dates=[...new Set(data.map(function(d){return d.date;}))].sort().reverse();
+  var streak=0;
+  var check=new Date();
+  for(var i=0;i<dates.length;i++){
+    var ds=check.toISOString().slice(0,10);
+    if(dates[i]===ds){streak++;check.setDate(check.getDate()-1);}
+    else break;
+  }
+  document.getElementById('streak-count').textContent=streak;
+
+  var area=document.getElementById('grape-area');
+  area.innerHTML='';
+  todayItems.forEach(function(item,idx){
+    var g=document.createElement('div');
+    g.className='grape';
+    g.style.background=COLORS[idx%COLORS.length];
+    g.innerHTML='<div class="shine"></div>';
+    g.title=item.memo||'';
+    g.addEventListener('click',function(){
+      g.classList.add('burst');
+      showToast('팡!');
+      setTimeout(function(){g.classList.remove('burst');},400);
+    });
+    area.appendChild(g);
+  });
+
+  var stem=document.getElementById('vine-stem');
+  stem.style.height=Math.min(area.offsetHeight+40,500)+'px';
+}
+
+function openMemo(){document.getElementById('memo-overlay').classList.add('open');document.getElementById('memo-input').value='';document.getElementById('memo-input').focus();}
+function closeMemo(){document.getElementById('memo-overlay').classList.remove('open');}
+
+function addGrape(){
+  var memo=document.getElementById('memo-input').value.trim();
+  var data=getData();
+  data.push({date:todayStr(),time:new Date().toISOString(),memo:memo});
+  saveData(data);
+  closeMemo();
+  render();
+  showToast(getRandomMsg());
+}
+
+function getRandomMsg(){
+  var msgs=['한 알 추가!','그래, 화낼 수 있지','포도알이 익어간다','꾹 참았다 대단해','한 알 더 모았다'];
+  return msgs[Math.floor(Math.random()*msgs.length)];
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},1500);
+}
+
+function resetToday(){
+  if(!confirm('오늘 포도알을 전부 지울까요?'))return;
+  var data=getData();
+  var today=todayStr();
+  data=data.filter(function(d){return d.date!==today;});
+  saveData(data);
+  render();
+  showToast('오늘 초기화 완료');
+}
+
+function openHistory(){
+  var h=document.getElementById('history');
+  h.classList.add('open');
+  var data=getData().slice().reverse();
+  var list=document.getElementById('history-list');
+  if(!data.length){list.innerHTML='<p style="color:#8b8fa3;text-align:center;padding:40px">아직 기록이 없어요</p>';return;}
+  var html='';
+  data.forEach(function(item,i){
+    var t=new Date(item.time);
+    var ts=t.toLocaleDateString('ko-KR')+' '+t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    var ci=getData().length-1-i;
+    html+='<div class="history-item"><div class="history-dot" style="background:'+COLORS[ci%COLORS.length]+';position:relative"><div class="shine"></div></div><div class="history-info"><div class="history-time">'+ts+'</div>'+(item.memo?'<div class="history-memo">'+item.memo.replace(/</g,'&lt;')+'</div>':'')+'</div><button class="history-del" onclick="delItem('+i+')">✕</button></div>';
+  });
+  list.innerHTML=html;
+}
+function closeHistory(){document.getElementById('history').classList.remove('open');}
+function delItem(ri){
+  var data=getData();
+  var idx=data.length-1-ri;
+  data.splice(idx,1);
+  saveData(data);
+  openHistory();
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
