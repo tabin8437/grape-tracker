@@ -107,11 +107,26 @@ body.shake{animation:shake .2s ease}
 
 <div class="login-screen" id="login-screen">
   <h1>울화통</h1>
-  <p>Google 계정으로 로그인</p>
+  <p id="login-msg">Google 계정으로 로그인</p>
   <div id="g_id_onload"
     data-client_id="272234568921-8m6a55tgvo7e86nsk2u7tjbarqff34en.apps.googleusercontent.com"
     data-callback="onLogin" data-auto_prompt="false" data-use_fedcm_for_prompt="false"></div>
   <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill" data-logo_alignment="left"></div>
+  <div id="req-form" style="display:none;margin-top:16px;text-align:center">
+    <input id="req-name" placeholder="이름 입력" maxlength="20" style="padding:10px 14px;border-radius:12px;border:1px solid #333;background:#1a1a2e;color:#fff;font-size:14px;margin-bottom:10px;display:block;width:220px;margin:0 auto 10px">
+    <button onclick="submitRequest()" style="padding:10px 28px;border-radius:12px;border:none;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:14px;font-weight:700;cursor:pointer">접근 요청</button>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div id="admin-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeAdmin()">
+  <div style="background:#1a1a2e;border:1px solid #333;border-radius:18px;padding:24px;width:360px;max-width:92vw;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.8)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="color:#fff;font-size:16px;font-weight:800">👑 사용자 관리</h2>
+      <button onclick="closeAdmin()" style="background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer">✕</button>
+    </div>
+    <div id="admin-list"></div>
+  </div>
 </div>
 
 <div id="app">
@@ -140,6 +155,7 @@ body.shake{animation:shake .2s ease}
   <div class="controls">
     <button class="ctrl-btn" onclick="openHistory()">📋</button>
     <button class="ctrl-btn" onclick="resetToday()">🗑</button>
+    <button class="ctrl-btn" id="btn-admin" style="display:none" onclick="openAdmin()">⚙️</button>
   </div>
 </div>
 
@@ -186,24 +202,104 @@ body.shake{animation:shake .2s ease}
 
 <script>
 /* ── Auth ── */
+var API_URL='https://script.google.com/macros/s/AKfycbwj3k6xaBQKUXiZLesgBE9IxzM-5eG3bDvYNr8BybKn9l0KnMV9CqMeitrkE6U7uPbzNA/exec';
+var ADMIN_EMAIL='tabin8437@gmail.com';
+var _loginUser=null;
+
 function decodeJwt(t){try{var b=t.split('.')[1];return JSON.parse(atob(b.replace(/-/g,'+').replace(/_/g,'/')));}catch(e){return null;}}
-var ALLOWED_EMAILS=['tabin8437@gmail.com','jhw5787@gmail.com'];
+function enc(t){return btoa(unescape(encodeURIComponent(t)));}
+function apiGet(params){return fetch(API_URL+'?'+params+'&t='+Date.now()).then(function(r){return r.json();});}
+
+function setMsg(txt,color){var el=document.getElementById('login-msg');el.textContent=txt;el.style.color=color||'#6b7280';}
+
 function onLogin(response){
   var p=decodeJwt(response.credential);
   if(!p||!p.email)return;
-  if(ALLOWED_EMAILS.indexOf(p.email.toLowerCase())<0){
-    document.querySelector('.login-screen p').textContent='접근 권한이 없습니다.';
-    document.querySelector('.login-screen p').style.color='#ef4444';return;
-  }
-  sessionStorage.setItem('grape_user',JSON.stringify({email:p.email,name:p.name||p.email}));
-  startApp();
+  var email=p.email.toLowerCase();
+  _loginUser={email:email,name:p.name||email};
+  setMsg('확인 중...');
+  apiGet('action=check&email='+encodeURIComponent(email)).then(function(res){
+    var user=res.user;
+    if(email===ADMIN_EMAIL||( user&&user.status==='approved')){
+      sessionStorage.setItem('grape_user',JSON.stringify(_loginUser));
+      startApp();
+    } else if(user&&user.status==='pending'){
+      setMsg('관리자 승인 대기 중입니다 🕐','#f59e0b');
+    } else {
+      setMsg('접근 권한이 없습니다. 이름을 입력하고 요청하세요.','#f87171');
+      document.getElementById('req-form').style.display='block';
+    }
+  }).catch(function(){
+    setMsg('서버 연결 실패. 잠시 후 다시 시도해주세요.','#f87171');
+  });
 }
+
+function submitRequest(){
+  var name=document.getElementById('req-name').value.trim();
+  if(!name){alert('이름을 입력해주세요.');return;}
+  if(!_loginUser)return;
+  setMsg('요청 중...','#a855f7');
+  document.getElementById('req-form').style.display='none';
+  apiGet('action=register&email='+encodeURIComponent(_loginUser.email)+'&name='+encodeURIComponent(enc(name))).then(function(){
+    setMsg('접근 요청 완료! 관리자 승인 후 이용 가능합니다 ✅','#a855f7');
+  }).catch(function(){
+    setMsg('요청 실패. 다시 시도해주세요.','#f87171');
+    document.getElementById('req-form').style.display='block';
+  });
+}
+
 function startApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
+  var u=JSON.parse(sessionStorage.getItem('grape_user')||'null');
+  if(u&&u.email===ADMIN_EMAIL) document.getElementById('btn-admin').style.display='flex';
   render();
 }
 (function(){try{var u=JSON.parse(sessionStorage.getItem('grape_user'));if(u&&u.email)startApp();}catch(e){}})();
+
+/* ── Admin ── */
+function openAdmin(){
+  document.getElementById('admin-overlay').style.display='flex';
+  loadAdminList();
+}
+function closeAdmin(){document.getElementById('admin-overlay').style.display='none';}
+function loadAdminList(){
+  var el=document.getElementById('admin-list');
+  el.innerHTML='<p style="color:#6b7280;font-size:13px">불러오는 중...</p>';
+  apiGet('action=list').then(function(res){
+    var users=res.users||[];
+    if(!users.length){el.innerHTML='<p style="color:#6b7280;font-size:13px;text-align:center">사용자 없음</p>';return;}
+    var pending=users.filter(function(u){return u.status==='pending';});
+    var approved=users.filter(function(u){return u.status!=='pending';});
+    var html='';
+    if(pending.length) html+='<div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:8px">⏳ 승인 대기 ('+pending.length+')</div>';
+    pending.forEach(function(u){
+      html+='<div style="background:#1e1e3a;border:1px solid #f59e0b44;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+        +'<div><div style="color:#fff;font-size:13px;font-weight:700">'+esc(u.name||u.email)+'</div><div style="color:#6b7280;font-size:11px">'+esc(u.email)+'</div></div>'
+        +'<div style="display:flex;gap:6px">'
+        +'<button onclick="approveUser(\''+u.email+'\')" style="background:#a855f7;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">승인</button>'
+        +'<button onclick="rejectUser(\''+u.email+'\')" style="background:#374151;color:#9ca3af;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">거부</button>'
+        +'</div></div>';
+    });
+    if(approved.length){
+      html+='<div style="font-size:11px;font-weight:700;color:#6b7280;margin:12px 0 8px">✅ 승인된 멤버 ('+approved.length+')</div>';
+      approved.forEach(function(u){
+        html+='<div style="background:#111827;border:1px solid #1f2937;border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">'
+          +'<div><div style="color:#d1d5db;font-size:13px">'+esc(u.name||u.email)+'</div><div style="color:#4b5563;font-size:11px">'+esc(u.email)+'</div></div>'
+          +'<button onclick="rejectUser(\''+u.email+'\')" style="background:#1f2937;color:#6b7280;border:none;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer">삭제</button>'
+          +'</div>';
+      });
+    }
+    el.innerHTML=html;
+  }).catch(function(){el.innerHTML='<p style="color:#f87171;font-size:13px">불러오기 실패</p>';});
+}
+function approveUser(email){
+  apiGet('action=update&email='+encodeURIComponent(email)+'&status=approved').then(function(){loadAdminList();});
+}
+function rejectUser(email){
+  if(!confirm(email+' 을(를) 삭제할까요?'))return;
+  apiGet('action=delete&email='+encodeURIComponent(email)).then(function(){loadAdminList();});
+}
 
 /* ── Tabs ── */
 function switchTab(id){
