@@ -145,7 +145,7 @@ body.shake{animation:shake .2s ease}
   </div>
   <div class="stats">
     <div class="stat"><div class="num" id="total-count">0</div><div class="label">오늘</div></div>
-    <div class="stat"><div class="num" id="all-count">0</div><div class="label">전체</div></div>
+    <div class="stat"><div class="num" id="all-count">0</div><div class="label">이번 달</div></div>
     <div class="stat"><div class="num" id="streak-count">0</div><div class="label">연속일</div></div>
   </div>
   <div class="main-area">
@@ -360,33 +360,54 @@ document.addEventListener('click',function(e){
 function render(){
   document.getElementById('memo-popup').classList.remove('show');
   var data=getData(),today=todayStr();
+  var monthPrefix=today.slice(0,7);
   var todayItems=data.filter(function(d){return d.date===today;});
+  var monthItems=data.filter(function(d){return d.date&&d.date.slice(0,7)===monthPrefix;});
   document.getElementById('total-count').textContent=todayItems.length;
-  document.getElementById('all-count').textContent=data.length;
+  document.getElementById('all-count').textContent=monthItems.length;
   var dates=[...new Set(data.map(function(d){return d.date;}))].sort().reverse();
   var streak=0,check=new Date();
   for(var i=0;i<dates.length;i++){if(dates[i]===check.toISOString().slice(0,10)){streak++;check.setDate(check.getDate()-1);}else break;}
   document.getElementById('streak-count').textContent=streak;
   var area=document.getElementById('grape-area');area.innerHTML='';
-  todayItems.forEach(function(item,idx){
-    var g=document.createElement('div');g.className='grape';g.style.background=COLORS[idx%COLORS.length];g.style.animationDelay=(idx*50)+'ms';
-    g.innerHTML='<div class="shine"></div>';
-    var memo=item.memo,time=new Date(item.time).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    g.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(g.classList.contains('tapped')){
-        var r=g.getBoundingClientRect();spawnParticles(r.left+r.width/2,r.top+r.height/2,FLAT_COLORS[idx%FLAT_COLORS.length]);
-        g.classList.add('burst');document.body.classList.add('shake');document.getElementById('memo-popup').classList.remove('show');showToast('팡!');
-        setTimeout(function(){g.classList.remove('burst');g.classList.remove('tapped');document.body.classList.remove('shake');},500);
-      }else{
-        document.querySelectorAll('.grape.tapped').forEach(function(el){el.classList.remove('tapped');});
-        g.classList.add('tapped');
-        var popup=document.getElementById('memo-popup');
-        if(memo){popup.innerHTML=esc(memo)+'<div class="memo-time">'+time+'</div>';popup.classList.add('show');}
-        else{popup.classList.remove('show');}
-      }
+  // 이번 달 날짜별 그룹으로 표시
+  var byDate={};
+  monthItems.forEach(function(item){if(!byDate[item.date])byDate[item.date]=[];byDate[item.date].push(item);});
+  var sortedDates=Object.keys(byDate).sort().reverse();
+  var allMonthItems=[];
+  sortedDates.forEach(function(d){
+    if(d!==today&&byDate[d].length){
+      var sep=document.createElement('div');
+      sep.style.cssText='width:100%;text-align:center;font-size:10px;color:#4b5563;padding:4px 0;font-weight:700';
+      var dd=new Date(d+'T00:00:00');
+      sep.textContent=(dd.getMonth()+1)+'월 '+dd.getDate()+'일 ('+byDate[d].length+'개)';
+      area.appendChild(sep);
+    }
+    byDate[d].forEach(function(item){allMonthItems.push(item);});
+  });
+  var globalIdx=0;
+  sortedDates.forEach(function(d){
+    byDate[d].forEach(function(item){
+      var idx=globalIdx++;
+      var g=document.createElement('div');g.className='grape';g.style.background=COLORS[idx%COLORS.length];g.style.animationDelay=(Math.min(idx,20)*40)+'ms';
+      g.innerHTML='<div class="shine"></div>';
+      var memo=item.memo,time=new Date(item.time).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      g.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(g.classList.contains('tapped')){
+          var r=g.getBoundingClientRect();spawnParticles(r.left+r.width/2,r.top+r.height/2,FLAT_COLORS[idx%FLAT_COLORS.length]);
+          g.classList.add('burst');document.body.classList.add('shake');document.getElementById('memo-popup').classList.remove('show');showToast('팡!');
+          setTimeout(function(){g.classList.remove('burst');g.classList.remove('tapped');document.body.classList.remove('shake');},500);
+        }else{
+          document.querySelectorAll('.grape.tapped').forEach(function(el){el.classList.remove('tapped');});
+          g.classList.add('tapped');
+          var popup=document.getElementById('memo-popup');
+          if(memo){popup.innerHTML=esc(memo)+'<div class="memo-time">'+time+'</div>';popup.classList.add('show');}
+          else{popup.classList.remove('show');}
+        }
+      });
+      area.appendChild(g);
     });
-    area.appendChild(g);
   });
 }
 
