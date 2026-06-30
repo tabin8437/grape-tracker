@@ -376,18 +376,17 @@ document.addEventListener('click',function(e){
 });
 
 var MONTH_SLOTS=90;
-function buildBunchRows(total){
-  // 위가 넓고 아래로 갈수록 좁아지는 포도송이 모양의 행별 개수
-  var rows=[],width=3,growing=true,sum=0;
-  while(sum<total){
-    rows.push(width);sum+=width;
-    if(growing){width++;if(width>=11)growing=false;}
-    else{width--;if(width<1)width=1;}
-  }
-  var over=sum-total;
-  if(over>0){
-    rows[rows.length-1]-=over;
-    if(rows[rows.length-1]<=0)rows.pop();
+function buildBunchRows(target){
+  // 위는 살짝 넓게 시작해서 봉우리까지 커졌다가, 끝에는 항상 1개(뾰족한 끝)로 마무리되는 포도송이 모양.
+  // 중간에 자르지 않고 항상 끝까지 완성된 모양이 나오도록, 정점 폭을 늘려가며 목표치를 넘을 때까지 키운다.
+  var k=2,rows;
+  while(true){
+    rows=[];
+    for(var w=2;w<=k;w++) rows.push(w);
+    for(var w=k-1;w>=1;w--) rows.push(w);
+    var sum=rows.reduce(function(a,b){return a+b;},0);
+    if(sum>=target||k>=20) break;
+    k++;
   }
   return rows;
 }
