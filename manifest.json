@@ -1,0 +1,14 @@
+{
+  "name": "울화통 포도밭",
+  "short_name": "울화통",
+  "description": "화날 때마다 포도알 하나씩 터뜨리는 앱",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f0f1a",
+  "theme_color": "#1a1a2e",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
