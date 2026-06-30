@@ -1,5 +1,5 @@
-var CACHE_NAME = 'grape-tracker-v1';
-var ASSETS = ['./', './index.html', './manifest.json', './icon.svg'];
+var CACHE_NAME = 'grape-tracker-v2';
+var ASSETS = ['./', './index.html', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function(e) {
   e.waitUntil(caches.open(CACHE_NAME).then(function(cache) { return cache.addAll(ASSETS); }));
