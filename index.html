@@ -78,6 +78,8 @@ body.shake{animation:shake .2s ease}
 @keyframes comboPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
 .combo-label{font-size:12px;color:#ef4444;text-align:center;letter-spacing:2px;font-weight:700;margin-top:4px}
 .combo-msg{font-size:14px;color:#fbbf24;text-align:center;margin-top:12px;font-weight:600;min-height:20px}
+.combo-best{font-size:13px;color:#8b8fa3;text-align:center;margin-top:8px;font-weight:600}
+.combo-best.new-record{color:#fbbf24;animation:comboPop .3s ease}
 
 /* ── overlays ── */
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);background:linear-gradient(135deg,rgba(168,85,247,.95),rgba(236,72,153,.95));color:#fff;padding:12px 24px;border-radius:14px;font-size:14px;font-weight:700;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:100;box-shadow:0 8px 30px rgba(168,85,247,.4)}
@@ -180,6 +182,7 @@ body.shake{animation:shake .2s ease}
     <div class="combo" id="combo-num">0</div>
     <div class="combo-label">COMBO</div>
     <div class="combo-msg" id="combo-msg"></div>
+    <div class="combo-best" id="combo-best">최고기록 0</div>
   </div>
 </div>
 
@@ -316,6 +319,7 @@ function switchTab(id){
   document.querySelectorAll('.tab-btn').forEach(function(b,i){b.classList.toggle('active',i===(id==='grape'?0:1));});
   document.querySelectorAll('.tab-page').forEach(function(p){p.classList.remove('active');});
   document.getElementById('page-'+id).classList.add('active');
+  if(id==='sandbag')renderBestCombo();
 }
 
 /* ── Particles ── */
@@ -450,6 +454,23 @@ function delItem(ri){var d=getData();d.splice(d.length-1-ri,1);saveData(d);openH
 
 /* ── Sandbag (샌드백) ── */
 var comboCount=0,comboTimer=null,punchLock=false;
+
+function getBestComboKey(){
+  try{var u=JSON.parse(sessionStorage.getItem('grape_user')||'null');return 'sandbag_best_'+((u&&u.email)||'guest');}catch(e){return 'sandbag_best_guest';}
+}
+function getBestCombo(){return parseInt(localStorage.getItem(getBestComboKey())||'0',10);}
+function renderBestCombo(){
+  var el=document.getElementById('combo-best');
+  if(el)el.textContent='최고기록 '+getBestCombo();
+}
+function checkBestCombo(count){
+  var best=getBestCombo();
+  if(count>best){
+    localStorage.setItem(getBestComboKey(),String(count));
+    var el=document.getElementById('combo-best');
+    if(el){el.textContent='🏆 신기록! '+count;el.classList.remove('new-record');void el.offsetWidth;el.classList.add('new-record');}
+  }
+}
 var HIT_WORDS=['💥','POW','BAM','SMACK','👊','BOOM','CRACK','퍽!','빡!','💢','WHAM','KO','찰싹!','억!','💀','BANG','으악!'];
 var COMBO_MSGS={5:'워밍업?',10:'좀 치네?',15:'손 풀렸다',20:'박치기 각',25:'미쳤다',30:'야수의 심장',40:'킬러 본능',50:'🥊 폭풍 주먹!',60:'멈출 수 없다',75:'분노의 질주',85:'나를 막을 자 없다',100:'🔥 전설의 주먹 🔥',125:'🌋 화산 폭발',150:'⚡ 번개 주먹',175:'💀 사신 강림',200:'☠️ 파괴신 ☠️',250:'🪐 행성 파괴자',300:'🌌 우주 멸망급',500:'?????? 뭐야 그만 쳐'};
 
@@ -474,6 +495,7 @@ function punchBag(e){
   comboCount++;
   var cn=document.getElementById('combo-num');cn.textContent=comboCount;
   cn.classList.remove('pop');void cn.offsetWidth;cn.classList.add('pop');
+  checkBestCombo(comboCount);
 
   document.body.classList.add('shake');setTimeout(function(){document.body.classList.remove('shake');},200);
 
