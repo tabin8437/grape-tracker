@@ -252,10 +252,15 @@ function startApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   var u=JSON.parse(sessionStorage.getItem('grape_user')||'null');
-  if(u&&u.email===ADMIN_EMAIL) document.getElementById('btn-admin').style.display='flex';
+  var isAdmin=(u&&u.email&&u.email.toLowerCase()===ADMIN_EMAIL)||(_loginUser&&_loginUser.email===ADMIN_EMAIL);
+  if(isAdmin) document.getElementById('btn-admin').style.display='flex';
   render();
 }
-(function(){try{var u=JSON.parse(sessionStorage.getItem('grape_user'));if(u&&u.email)startApp();}catch(e){}})();
+var _APP_VER='v15';
+(function(){
+  if(localStorage.getItem('grape_ver')!==_APP_VER){localStorage.removeItem('grape_user');sessionStorage.removeItem('grape_user');localStorage.setItem('grape_ver',_APP_VER);}
+  try{var u=JSON.parse(sessionStorage.getItem('grape_user'));if(u&&u.email)startApp();}catch(e){}
+})();
 
 /* ── Admin ── */
 function openAdmin(){
